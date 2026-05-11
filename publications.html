@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Publications · Kantaro Murayama</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="bg-decor">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+    <span class="blob blob-3"></span>
+  </div>
+
+  <header class="site-header">
+    <a href="index.html" class="brand">
+      <span class="brand-icon">◐</span>
+      <span class="brand-name">Kantaro Murayama</span>
+    </a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="publications.html" class="active">Publications</a>
+      <a href="cv.html">CV</a>
+    </nav>
+    <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <span class="section-tag">Publications</span>
+      <h1>Papers &amp; <em>Preprints</em></h1>
+    </section>
+
+    <!-- Selected papers (top picks) -->
+    <section class="section featured-section">
+      <div class="section-header">
+        <span class="section-tag">Highlighted</span>
+        <h2>Selected papers</h2>
+      </div>
+      <div class="featured-grid" id="featured-pubs">
+        <p class="muted">Loading…</p>
+      </div>
+    </section>
+
+    <!-- Filter buttons + full archive -->
+    <section class="section">
+      <div class="filter-bar">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="publications">Publications</button>
+        <button class="chip" data-filter="preprints">Preprints</button>
+        <button class="chip" data-filter="others">Others</button>
+      </div>
+      <div id="pubs">
+        <p class="muted">Loading…</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span id="year"></span> Kantaro Murayama, Kyoto, Japan.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
