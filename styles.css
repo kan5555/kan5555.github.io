@@ -347,7 +347,7 @@ main {
 /* ---------- About cards ---------- */
 .about-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 22px;
 }
 .card {
@@ -410,6 +410,41 @@ main {
 .news-list .news-text em {
   color: var(--ink);
   font-style: italic;
+}
+
+/* News card: full width row under Who I am / Research focus */
+.news-card {
+  grid-column: 1 / -1;
+  padding: 26px 30px;
+}
+.news-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 12px;
+}
+.news-card .news-list {
+  max-height: 300px;
+  font-size: 0.95rem;
+}
+.news-card .news-list li {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 20px;
+  align-items: baseline;
+  padding: 14px 0;
+}
+.news-card .news-list .news-meta {
+  margin-bottom: 0;
+}
+.news-card .news-list .news-date {
+  font-size: 0.8rem;
+}
+.news-card .news-list .news-text {
+  font-size: 0.95rem;
+}
+@media (max-width: 640px) {
+  .news-card { padding: 22px 20px; }
+  .news-card .news-list li { display: block; }
+  .news-card .news-list .news-meta { margin-bottom: 4px; }
 }
 .news-date {
   display: inline-block;
