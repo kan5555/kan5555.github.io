@@ -21,6 +21,31 @@ const CACHE_TTL    = 1000 * 60 * 60 * 24; // 24 hours
 // Manual override map: DOI → { role: "corresponding" | "first" | "first-corr" }
 const PAPER_OVERRIDES = {};
 
+// ============================================================
+//  MANUAL NEWS
+//  Non-paper announcements (moves, awards, talks, ...).
+//  Papers arrive automatically from ORCID; add anything else
+//  here. Entries are merged with papers and sorted by date.
+//    date: [year, month, day]  (month/day optional)
+//    chip: short label shown next to the date
+//    html: the sentence itself (inline HTML allowed)
+// ============================================================
+function manualNewsItems() {
+  const sunGroup =
+    '<a href="https://whsunresearch.group/" target="_blank" rel="noopener">Sun Research Group</a>';
+
+  return [
+    {
+      date: [2026, 10, 1],
+      chip: "New position",
+      html: `Started as a Postdoctoral Research Fellow in the ${sunGroup}, Department of Materials Science and Engineering, University of Michigan.`,
+    },
+
+    // Add further announcements here, e.g.
+    // { date: [2026, 12, 5], chip: "Talk", html: "Invited talk at ..." },
+  ];
+}
+
 // ---------- Cache helpers ----------
 function cacheGet(key) {
   try {
@@ -382,31 +407,62 @@ function renderFeaturedInto(views, featured) {
     : `<p class="muted">No highlighted papers yet.</p>`;
 }
 
+function sortKeyOf(y, m, d) {
+  return (y || 0) * 10000 + (m || 0) * 100 + (d || 0);
+}
+
+// Convert an enriched paper into a news entry
+function paperToNewsItem(v) {
+  const d = v.date || {};
+  const year  = d.year  || v.year || null;
+  const month = d.month || null;
+  const day   = d.day   || null;
+  const titleHTML = v.url
+    ? `<a href="${v.url}" target="_blank" rel="noopener">${v.title}</a>`
+    : v.title;
+  const venue = v.journal ? ` in <em>${escapeHtml(v.journal)}</em>` : "";
+  return {
+    sortKey: sortKeyOf(year, month, day),
+    dateStr: year ? formatLongDate(year, month, day) : "n.d.",
+    chipHtml: v.role
+      ? `<span class="news-role ${roleClass(v.role)}">${roleLabel(v.role)}</span>`
+      : "",
+    bodyHtml: `New paper${venue}: ${titleHTML}.`,
+  };
+}
+
+// Convert a MANUAL_NEWS entry into a news entry
+function manualToNewsItem(n) {
+  const [y, m, d] = n.date || [];
+  return {
+    sortKey: sortKeyOf(y, m, d),
+    dateStr: y ? formatLongDate(y, m, d) : "n.d.",
+    chipHtml: n.chip
+      ? `<span class="news-role role-note">${escapeHtml(n.chip)}</span>`
+      : "",
+    bodyHtml: n.html || "",
+  };
+}
+
 function renderNewsInto(views, list) {
   if (!list) return;
-  if (!views.length) {
+
+  const items = views.map(paperToNewsItem)
+    .concat(manualNewsItems().map(manualToNewsItem))
+    .sort((a, b) => b.sortKey - a.sortKey);
+
+  if (!items.length) {
     list.innerHTML = `<li class="muted">No recent updates.</li>`;
     return;
   }
-  list.innerHTML = views.map((v) => {
-    const titleHTML = v.url
-      ? `<a href="${v.url}" target="_blank" rel="noopener">${v.title}</a>`
-      : v.title;
-    const venue = v.journal ? ` in <em>${escapeHtml(v.journal)}</em>` : "";
-    const role = v.role
-      ? `<span class="news-role ${roleClass(v.role)}">${roleLabel(v.role)}</span>`
-      : "";
-    const dateStr = v.date
-      ? formatLongDate(v.date.year, v.date.month, v.date.day)
-      : (v.year ? String(v.year) : "n.d.");
-    return `<li>
+
+  list.innerHTML = items.map((it) => `<li>
       <div class="news-meta">
-        <span class="news-date">${dateStr}</span>
-        ${role}
+        <span class="news-date">${it.dateStr}</span>
+        ${it.chipHtml}
       </div>
-      <div class="news-text">New paper${venue}: ${titleHTML}.</div>
-    </li>`;
-  }).join("");
+      <div class="news-text">${it.bodyHtml}</div>
+    </li>`).join("");
 }
 
 // ---------- Master flow: progressive render ----------
@@ -422,7 +478,8 @@ async function loadAndRender() {
     console.error(e);
     if (pubs)     pubs.innerHTML     = errMsg();
     if (featured) featured.innerHTML = errMsg();
-    if (news)     news.innerHTML     = `<li class="muted">${errMsgPlain()}</li>`;
+    // Manual announcements still render even if ORCID is unreachable
+    if (news)     renderNewsInto([], news);
     return;
   }
 

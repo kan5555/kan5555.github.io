@@ -26,7 +26,7 @@
   --paper:        #fbfaf5;
   --line:         #ece6d8;
 
-  --ink:          #2c2a3a;          /* near-black, slightly violet */
+  --ink:          #2c2a3a;
   --ink-soft:     #5a586d;
   --muted:        #8a899e;
 
@@ -953,6 +953,7 @@ main {
 .news-role.role-first     { background: var(--sage);   color: var(--sage-ink); }
 .news-role.role-corr      { background: var(--butter); color: var(--butter-ink); }
 .news-role.role-coauthor  { background: var(--cream);  color: var(--ink-soft); border: 1px solid var(--line); }
+.news-role.role-note      { background: var(--sky);    color: var(--sky-ink); }
 
 /* ---------- Publications: Featured (Highlighted) ---------- */
 .featured-section {
