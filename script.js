@@ -34,6 +34,33 @@ const ANGEWANDTE_KEEP = "ange";   // "ange" or "anie"
 // Papers without a matching file simply show no graphic.
 const TOC_DIR = "";
 
+// Press releases, shown under the paper title.
+// Key = DOI (lowercase). lang: "JP" for Japanese pages, "EN" for English.
+const PRESS_RELEASES = {
+  "10.1126/sciadv.adt3886": [
+    { lang: "JP", url: "https://www.t.kyoto-u.ac.jp/ja/research/topics/20260404" },
+    { lang: "EN", url: "https://www.cse.t.kyoto-u.ac.jp/en/research/topics/dauvrm" },
+  ],
+  "10.1021/jacs.5c09574": [
+    { lang: "JP", url: "https://www.t.kyoto-u.ac.jp/ja/research/topics/20251217" },
+  ],
+  "10.1021/jacs.5c05749": [
+    { lang: "JP", url: "https://www.t.kyoto-u.ac.jp/ja/research/topics/20250722" },
+  ],
+  "10.1021/jacs.3c04521": [
+    { lang: "JP", url: "https://www.t.kyoto-u.ac.jp/ja/research/topics/20230929" },
+  ],
+};
+
+function pressHtml(doi) {
+  const list = doi && PRESS_RELEASES[String(doi).toLowerCase()];
+  if (!list || !list.length) return "";
+  const links = list.map((p) =>
+    `<a class="press-link" href="${p.url}" target="_blank" rel="noopener">${escapeHtml(p.lang)} ↗</a>`
+  ).join("");
+  return `<div class="pub-press"><span class="pub-press-label">Press release</span>${links}</div>`;
+}
+
 // ============================================================
 //  MANUAL NEWS
 //  Non-paper announcements (moves, awards, talks, ...).
@@ -423,6 +450,7 @@ function renderPubCard(v, withToc) {
           ${role}
         </div>
         <h3 class="pub-title">${v.title}</h3>
+        ${pressHtml(v.doi)}
         ${v.authorString ? `<p class="pub-authors">${v.authorString}</p>` : ""}
         <p class="pub-venue">
           ${journal}${sep}${yr}${link ? " " + link : ""}

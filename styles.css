@@ -1017,6 +1017,38 @@ main {
   flex-wrap: wrap;
 }
 
+/* ---------- Publications: press release links ---------- */
+.pub-press {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 6px;
+}
+.pub-press-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.press-link {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--butter);
+  color: var(--butter-ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.press-link:hover {
+  background: var(--butter-deep);
+  color: var(--ink);
+}
+
 /* ---------- Publications: TOC graphics ---------- */
 .pub-body { min-width: 0; }
 .pub:has(.pub-toc) {
