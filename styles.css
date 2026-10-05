@@ -1017,6 +1017,34 @@ main {
   flex-wrap: wrap;
 }
 
+/* ---------- Publications: TOC graphics ---------- */
+.pub-body { min-width: 0; }
+.pub:has(.pub-toc) {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.pub-toc {
+  display: block;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.pub-toc img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* Selected papers: graphic on top, full card width */
+.featured-grid .pub:has(.pub-toc) { display: block; }
+.featured-grid .pub-toc { margin-bottom: 12px; }
+@media (max-width: 640px) {
+  .pub:has(.pub-toc) { display: block; }
+  .pub-toc { max-width: 300px; margin-bottom: 10px; }
+}
+
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }

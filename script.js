@@ -21,6 +21,18 @@ const CACHE_TTL    = 1000 * 60 * 60 * 24; // 24 hours
 // Manual override map: DOI → { role: "corresponding" | "first" | "first-corr" }
 const PAPER_OVERRIDES = {};
 
+// Angewandte Chemie publishes each paper in two editions with the same
+// title: the German edition (DOI 10.1002/ange.*) and the International
+// Edition (DOI 10.1002/anie.*). When ORCID lists both, keep only this one.
+const ANGEWANDTE_KEEP = "ange";   // "ange" or "anie"
+
+// Table-of-contents (TOC) graphics.
+// Put image files in a "toc" folder in the repository, named after the
+// DOI in lowercase with "/" replaced by "_". PNG or JPG both work, e.g.
+//   toc/10.1021_jacs.5c09574.png
+// Papers without a matching file simply show no graphic.
+const TOC_DIR = "toc/";
+
 // ============================================================
 //  MANUAL NEWS
 //  Non-paper announcements (moves, awards, talks, ...).
@@ -347,8 +359,47 @@ function buildView(w, cr, oa) {
   };
 }
 
+// ---------- Angewandte duplicates (German vs. International Edition) ----------
+function normTitle(t) {
+  return String(t || "").replace(/<[^>]+>/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+function dedupeAngewandte(works) {
+  const keep = ANGEWANDTE_KEEP === "anie" ? "anie" : "ange";
+  const drop = keep === "ange" ? "anie" : "ange";
+  const keepRe = new RegExp("/" + keep + "\\.", "i");
+  const dropRe = new RegExp("/" + drop + "\\.", "i");
+
+  const byTitle = {};
+  works.forEach((w) => {
+    const k = normTitle(w.title);
+    (byTitle[k] = byTitle[k] || []).push(w);
+  });
+  const removed = new Set();
+  Object.values(byTitle).forEach((group) => {
+    if (group.length < 2) return;
+    if (!group.some((w) => keepRe.test(w.doi || ""))) return;
+    group.forEach((w) => { if (dropRe.test(w.doi || "")) removed.add(w); });
+  });
+  return works.filter((w) => !removed.has(w));
+}
+
+// ---------- TOC graphics ----------
+function tocSlug(doi) {
+  return String(doi).toLowerCase().replace(/\//g, "_");
+}
+// Called by <img onerror>: try .jpg after .png, then remove the slot.
+function tocFallback(img) {
+  if (!img.dataset.triedJpg) {
+    img.dataset.triedJpg = "1";
+    img.src = img.src.replace(/\.png$/i, ".jpg");
+  } else {
+    const box = img.closest(".pub-toc");
+    if (box) box.remove();
+  }
+}
+
 // ---------- Render: pub card ----------
-function renderPubCard(v) {
+function renderPubCard(v, withToc) {
   const role = v.role
     ? `<span class="pub-role ${roleClass(v.role)}">${roleLabel(v.role)}</span>`
     : "";
@@ -358,23 +409,31 @@ function renderPubCard(v) {
   const journal = v.journal ? `<em class="pub-journal">${escapeHtml(v.journal)}</em>` : "";
   const yr = v.year ? `<span class="pub-year">${v.year}</span>` : "";
   const sep = (journal && yr) ? ", " : "";
+  const toc = (withToc && v.doi)
+    ? `<a class="pub-toc" href="${v.url || "#"}" target="_blank" rel="noopener">
+         <img src="${TOC_DIR}${tocSlug(v.doi)}.png" alt="Table of contents graphic" loading="lazy" onerror="tocFallback(this)">
+       </a>`
+    : "";
   return `
     <article class="pub" data-type="${v.category}">
-      <div class="pub-head">
-        <span class="pub-badge ${v.category}">${categoryLabel(v.category)}</span>
-        ${role}
+      ${toc}
+      <div class="pub-body">
+        <div class="pub-head">
+          <span class="pub-badge ${v.category}">${categoryLabel(v.category)}</span>
+          ${role}
+        </div>
+        <h3 class="pub-title">${v.title}</h3>
+        ${v.authorString ? `<p class="pub-authors">${v.authorString}</p>` : ""}
+        <p class="pub-venue">
+          ${journal}${sep}${yr}${link ? " " + link : ""}
+        </p>
       </div>
-      <h3 class="pub-title">${v.title}</h3>
-      ${v.authorString ? `<p class="pub-authors">${v.authorString}</p>` : ""}
-      <p class="pub-venue">
-        ${journal}${sep}${yr}${link ? " " + link : ""}
-      </p>
     </article>
   `;
 }
 
 // ---------- Renderers ----------
-function renderPubsInto(views, container) {
+function renderPubsInto(views, container, withToc) {
   if (!container) return;
   const byYear = {};
   views.forEach((v) => {
@@ -388,13 +447,13 @@ function renderPubsInto(views, container) {
   });
   container.innerHTML = years
     .map((year) => {
-      const items = byYear[year].map(renderPubCard).join("");
+      const items = byYear[year].map((v) => renderPubCard(v, withToc)).join("");
       return `<h3 class="year-heading">${escapeHtml(year)}</h3>${items}`;
     })
     .join("");
 }
 
-function renderFeaturedInto(views, featured) {
+function renderFeaturedInto(views, featured, withToc) {
   if (!featured) return;
   // Selected: top 3 first-author papers (need Crossref first; if no roles yet,
   // fall back to first 3 most recent).
@@ -403,7 +462,7 @@ function renderFeaturedInto(views, featured) {
     ? views.filter((v) => v.role === "first" || v.role === "first-corr").slice(0, 3)
     : views.slice(0, 3);
   featured.innerHTML = list.length
-    ? list.map(renderPubCard).join("")
+    ? list.map((v) => renderPubCard(v, withToc)).join("")
     : `<p class="muted">No highlighted papers yet.</p>`;
 }
 
@@ -483,10 +542,13 @@ async function loadAndRender() {
     return;
   }
 
-  // Pass 1: ORCID-only views (renders almost instantly)
+  // Drop the duplicate Angewandte edition (same title, ange vs. anie)
+  orcid = dedupeAngewandte(orcid);
+
+  // Pass 1: ORCID-only views (renders almost instantly, no TOC yet)
   const initialViews = orcid.map((w) => buildView(w, null, null));
-  renderPubsInto(initialViews, pubs);
-  renderFeaturedInto(initialViews, featured);
+  renderPubsInto(initialViews, pubs, false);
+  renderFeaturedInto(initialViews, featured, false);
   renderNewsInto(initialViews, news);
   setupPublicationFilter();
 
@@ -503,8 +565,8 @@ async function loadAndRender() {
     const k = w.doi ? w.doi.toLowerCase() : null;
     return buildView(w, k ? crossrefMap[k] : null, k ? openalexMap[k] : null);
   });
-  renderPubsInto(enrichedViews, pubs);
-  renderFeaturedInto(enrichedViews, featured);
+  renderPubsInto(enrichedViews, pubs, true);
+  renderFeaturedInto(enrichedViews, featured, true);
   renderNewsInto(enrichedViews, news);
   setupPublicationFilter();
 }
