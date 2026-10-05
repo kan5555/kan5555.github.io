@@ -27,11 +27,12 @@ const PAPER_OVERRIDES = {};
 const ANGEWANDTE_KEEP = "ange";   // "ange" or "anie"
 
 // Table-of-contents (TOC) graphics.
-// Put image files in a "toc" folder in the repository, named after the
-// DOI in lowercase with "/" replaced by "_". PNG or JPG both work, e.g.
-//   toc/10.1021_jacs.5c09574.png
+// Put image files in the top level of the repository (next to
+// index.html), named after the DOI in lowercase with "/" replaced
+// by "_". PNG or JPG both work, e.g.
+//   10.1021_jacs.5c09574.png
 // Papers without a matching file simply show no graphic.
-const TOC_DIR = "toc/";
+const TOC_DIR = "";
 
 // ============================================================
 //  MANUAL NEWS
