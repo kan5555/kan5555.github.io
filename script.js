@@ -417,7 +417,6 @@ function renderPubCard(v, withToc) {
     : "";
   return `
     <article class="pub" data-type="${v.category}">
-      ${toc}
       <div class="pub-body">
         <div class="pub-head">
           <span class="pub-badge ${v.category}">${categoryLabel(v.category)}</span>
@@ -429,6 +428,7 @@ function renderPubCard(v, withToc) {
           ${journal}${sep}${yr}${link ? " " + link : ""}
         </p>
       </div>
+      ${toc}
     </article>
   `;
 }

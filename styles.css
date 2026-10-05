@@ -1021,9 +1021,9 @@ main {
 .pub-body { min-width: 0; }
 .pub:has(.pub-toc) {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  gap: 18px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  gap: 20px;
+  align-items: center;
 }
 .pub-toc {
   display: block;
@@ -1037,12 +1037,12 @@ main {
   width: 100%;
   height: auto;
 }
-/* Selected papers: graphic on top, full card width */
+/* Selected papers: graphic below the text, full card width */
 .featured-grid .pub:has(.pub-toc) { display: block; }
-.featured-grid .pub-toc { margin-bottom: 12px; }
+.featured-grid .pub-toc { margin-top: 14px; }
 @media (max-width: 640px) {
   .pub:has(.pub-toc) { display: block; }
-  .pub-toc { max-width: 300px; margin-bottom: 10px; }
+  .pub-toc { max-width: 300px; margin-top: 12px; }
 }
 
 /* ---------- Reduced motion ---------- */
