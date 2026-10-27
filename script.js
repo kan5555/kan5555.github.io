@@ -34,6 +34,48 @@ const ANGEWANDTE_KEEP = "ange";   // "ange" or "anie"
 // Papers without a matching file simply show no graphic.
 const TOC_DIR = "";
 
+// Papers that are NOT on ORCID (e.g. Japanese articles), added by hand.
+// They appear in the Papers list only (not in Selected papers or News).
+//   category: "publications" | "preprints" | "others"
+//   role:     "first" | "corresponding" | "first-corr" | "coauthor"
+const MANUAL_PAPERS = [
+  {
+    title: "高圧が引き出す動的構造と新骨格: 遷移金属酸化物の新たな可能性",
+    authors: "<strong>K. Murayama</strong>, H. Kageyama",
+    journal: "Low Temperature and Materials Sciences (Kyoto University)",
+    detail: "No. 47, p. 13",
+    year: 2026,
+    date: { year: 2026, month: 8, day: null },
+    url: "https://www.ltm.kyoto-u.ac.jp/centershi/LTM-47.pdf#page=13",
+    linkLabel: "PDF",
+    category: "others",
+    role: "first",
+  },
+];
+
+function manualPaperViews() {
+  return MANUAL_PAPERS.map((p) => ({
+    title: escapeHtml(p.title),
+    journal: p.journal || "",
+    detail: p.detail || "",
+    year: p.year || null,
+    date: p.date || { year: p.year || null, month: null, day: null },
+    url: p.url || null,
+    linkLabel: p.linkLabel || "Link",
+    doi: null,
+    authorString: p.authors || "",
+    category: p.category || "others",
+    role: p.role || null,
+    manual: true,
+  }));
+}
+
+// ORCID papers + manual papers, newest year first
+function withManualPapers(views) {
+  return views.concat(manualPaperViews())
+    .sort((a, b) => (b.year || 0) - (a.year || 0));
+}
+
 // Press releases, shown under the paper title.
 // Key = DOI (lowercase). lang: "JP" for Japanese pages, "EN" for English.
 const PRESS_RELEASES = {
@@ -432,9 +474,11 @@ function renderPubCard(v, withToc) {
     ? `<span class="pub-role ${roleClass(v.role)}">${roleLabel(v.role)}</span>`
     : "";
   const link = v.url
-    ? `<a class="pub-link" href="${v.url}" target="_blank" rel="noopener">DOI ↗</a>`
+    ? `<a class="pub-link" href="${v.url}" target="_blank" rel="noopener">${escapeHtml(v.linkLabel || "DOI")} ↗</a>`
     : "";
-  const journal = v.journal ? `<em class="pub-journal">${escapeHtml(v.journal)}</em>` : "";
+  const journal = v.journal
+    ? `<em class="pub-journal">${escapeHtml(v.journal)}</em>${v.detail ? " " + escapeHtml(v.detail) : ""}`
+    : "";
   const yr = v.year ? `<span class="pub-year">${v.year}</span>` : "";
   const sep = (journal && yr) ? ", " : "";
   const toc = (withToc && v.doi)
@@ -564,7 +608,7 @@ async function loadAndRender() {
     orcid = await fetchOrcidWorks();
   } catch (e) {
     console.error(e);
-    if (pubs)     pubs.innerHTML     = errMsg();
+    if (pubs)     { renderPubsInto(manualPaperViews(), pubs, false); setupPublicationFilter(); }
     if (featured) featured.innerHTML = errMsg();
     // Manual announcements still render even if ORCID is unreachable
     if (news)     renderNewsInto([], news);
@@ -576,7 +620,7 @@ async function loadAndRender() {
 
   // Pass 1: ORCID-only views (renders almost instantly, no TOC yet)
   const initialViews = orcid.map((w) => buildView(w, null, null));
-  renderPubsInto(initialViews, pubs, false);
+  renderPubsInto(withManualPapers(initialViews), pubs, false);
   renderFeaturedInto(initialViews, featured, false);
   renderNewsInto(initialViews, news);
   setupPublicationFilter();
@@ -594,7 +638,7 @@ async function loadAndRender() {
     const k = w.doi ? w.doi.toLowerCase() : null;
     return buildView(w, k ? crossrefMap[k] : null, k ? openalexMap[k] : null);
   });
-  renderPubsInto(enrichedViews, pubs, true);
+  renderPubsInto(withManualPapers(enrichedViews), pubs, true);
   renderFeaturedInto(enrichedViews, featured, true);
   renderNewsInto(enrichedViews, news);
   setupPublicationFilter();
